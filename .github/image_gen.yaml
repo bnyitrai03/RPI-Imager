@@ -1,0 +1,35 @@
+name: Build Custom ARM64 Lite Image
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build-custom-pi-image:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository code
+        uses: actions/checkout@v4
+
+      - name: Build Raspberry Pi Image
+        id: build-image
+        uses: usimd/pi-gen-action@v1
+        with:
+          image-name: 'baby-monitor-arm64'
+          pi-gen-version: 'arm64'
+          release: 'bookworm'
+          # List of stages to build, lite image (stage0, 1, 2)
+          # and then the custom stage:
+          stage-list: 'stage0 stage1 stage2 ./pi-gen-custom-stage'
+          enable-ssh: '1'
+          username: 'rpicm5'
+          password: 'rpicm5asd123' # Use SECRETS!
+          hostname: 'rpicm5'
+          timezone: 'Europe/Budapest'
+          compression: 'zip'
+
+      - name: Upload Image Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: rpi-image-${{ github.run_id }}
+          path: ${{ steps.build-image.outputs.image-path }}
