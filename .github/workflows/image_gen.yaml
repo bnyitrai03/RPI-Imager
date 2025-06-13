@@ -25,7 +25,7 @@ jobs:
 
       - name: Build Raspberry Pi Image
         id: build-image
-        uses: usimd/pi-gen-action@latest
+        uses: usimd/pi-gen-action@v1.10.0
         with:
           # Main configuration
           image-name: 'baby-monitor-arm64'
