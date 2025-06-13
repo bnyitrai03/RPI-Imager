@@ -23,12 +23,23 @@ jobs:
       - name: Check out repository code
         uses: actions/checkout@v4
 
+      - name: Set output variables
+        id: set-output
+        run: |
+          VERSION="${{ github.event.inputs.version }}"
+          IMAGE_NAME="baby-monitor-arm64"
+          IMAGE_TAG="${IMAGE_NAME}-${VERSION}"
+          
+          echo "IMAGE_TAG=${IMAGE_TAG}" >> $GITHUB_OUTPUT
+          echo "IMAGE_NAME=${IMAGE_NAME}" >> $GITHUB_OUTPUT
+          echo "VERSION=${VERSION}" >> $GITHUB_OUTPUT
+
       - name: Build Raspberry Pi Image
         id: build-image
         uses: usimd/pi-gen-action@v1.10.0
         with:
           # Main configuration
-          image-name: 'baby-monitor-arm64'
+          image-name: '${{ steps.set-output.outputs.IMAGE_TAG }}'
           pi-gen-version: 'arm64'
           release: 'bookworm'
           stage-list: 'stage0 stage1 stage2 ./pi-gen-custom-stage'
@@ -51,17 +62,6 @@ jobs:
           wpa-country: 'HU'
           wpa-essid: '${{ secrets.WIFI_SSID }}'
           wpa-password: '${{ secrets.WIFI_PASS }}'
-
-      - name: Set output variables
-        id: set-output
-        run: |
-          VERSION="${{ github.event.inputs.version }}"
-          IMAGE_NAME="baby-monitor-arm64"
-          IMAGE_TAG="${IMAGE_NAME}-${VERSION}"
-          
-          echo "IMAGE_TAG=${IMAGE_TAG}" >> $GITHUB_OUTPUT
-          echo "IMAGE_NAME=${IMAGE_NAME}" >> $GITHUB_OUTPUT
-          echo "VERSION=${VERSION}" >> $GITHUB_OUTPUT
 
       - name: Upload Image Artifact
         uses: actions/upload-artifact@v4
