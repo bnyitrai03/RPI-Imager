@@ -44,8 +44,8 @@ jobs:
           release: 'bookworm'
           stage-list: 'stage0 stage1 stage2 ./pi-gen-custom-stage'
           compression: 'zip'
-          compression-level: 6
-          github-token: ${{ github.token }}
+          compression-level: 3
+          verbose-output: true
 
           # User configuration
           enable-ssh: 1
