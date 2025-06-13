@@ -34,21 +34,23 @@ jobs:
           stage-list: 'stage0 stage1 stage2 ./pi-gen-custom-stage'
           compression: 'zip'
           compression-level: 6
+          github-token: ${{ github.token }}
 
           # User configuration
-          enable-ssh: '1'
-          hostname: ${{ secrets.HOSTNAME }}
-          username: ${{ secrets.USERNAME }}
-          password: ${{ secrets.PASSWORD }}
-          pubkey-ssh-first-user: ${{ secrets.SSH_KEY }}
+          enable-ssh: 1
+          disable-first-boot-user-rename: 1
+          hostname: '${{ secrets.HOSTNAME }}'
+          username: '${{ secrets.USERNAME }}'
+          password: '${{ secrets.PASSWORD }}'
+          pubkey-ssh-first-user: '${{ secrets.SSH_KEY }}'
 
           # Localization settings
           timezone: 'Europe/Budapest'
           keyboard-keymap: 'hu'
           keyboard-layout: 'Hungarian (HU)'
           wpa-country: 'HU'
-          wpa-essid: ${{ secrets.WIFI_SSID }}
-          wpa-password: ${{ secrets.WIFI_PASS }}
+          wpa-essid: '${{ secrets.WIFI_SSID }}'
+          wpa-password: '${{ secrets.WIFI_PASS }}'
 
       - name: Set output variables
         id: set-output
