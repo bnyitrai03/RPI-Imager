@@ -2,10 +2,22 @@ name: Build Custom ARM64 Lite Image
 
 on:
   workflow_dispatch:
+    inputs:
+      version:
+        description: 'Image version'
+        required: true
+        type: string
 
 jobs:
   build-custom-pi-image:
+    name: Build Custom Raspberry Pi Image
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      discussions: write
+    outputs:
+      image_tag: ${{ steps.set-output.outputs.IMAGE_TAG }}
+      image_name: ${{ steps.set-output.outputs.IMAGE_NAME }}
 
     steps:
       - name: Check out repository code
@@ -13,23 +25,92 @@ jobs:
 
       - name: Build Raspberry Pi Image
         id: build-image
-        uses: usimd/pi-gen-action@v1
+        uses: usimd/pi-gen-action@latest
         with:
+          # Main configuration
           image-name: 'baby-monitor-arm64'
           pi-gen-version: 'arm64'
           release: 'bookworm'
-          # List of stages to build, lite image (stage0, 1, 2)
-          # and then the custom stage:
           stage-list: 'stage0 stage1 stage2 ./pi-gen-custom-stage'
-          enable-ssh: '1'
-          username: 'rpicm5'
-          password: 'rpicm5asd123' # Use SECRETS!
-          hostname: 'rpicm5'
-          timezone: 'Europe/Budapest'
           compression: 'zip'
+          compression-level: 6
+
+          # User configuration
+          enable-ssh: '1'
+          hostname: ${{ secrets.HOSTNAME }}
+          username: ${{ secrets.USERNAME }}
+          password: ${{ secrets.PASSWORD }}
+          pubkey-ssh-first-user: ${{ secrets.SSH_KEY }}
+
+          # Localization settings
+          timezone: 'Europe/Budapest'
+          keyboard-keymap: 'hu'
+          keyboard-layout: 'Hungarian (HU)'
+          wpa-country: 'HU'
+          wpa-essid: ${{ secrets.WIFI_SSID }}
+          wpa-password: ${{ secrets.WIFI_PASS }}
+
+      - name: Set output variables
+        id: set-output
+        run: |
+          VERSION="${{ github.event.inputs.version }}"
+          IMAGE_NAME="baby-monitor-arm64"
+          IMAGE_TAG="${IMAGE_NAME}-${VERSION}"
+          
+          echo "IMAGE_TAG=${IMAGE_TAG}" >> $GITHUB_OUTPUT
+          echo "IMAGE_NAME=${IMAGE_NAME}" >> $GITHUB_OUTPUT
+          echo "VERSION=${VERSION}" >> $GITHUB_OUTPUT
 
       - name: Upload Image Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: rpi-image-${{ github.run_id }}
+          name: ${{ steps.set-output.outputs.IMAGE_TAG }}
           path: ${{ steps.build-image.outputs.image-path }}
+
+  release:
+    name: Create Release
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      discussions: write
+    needs: [build-custom-pi-image]
+    
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: ${{ needs.build-custom-pi-image.outputs.image_tag }}
+          path: ${{ github.workspace }}/image
+
+      - name: Display structure of downloaded files
+        run: ls -R ${{ github.workspace }}/image
+
+      - name: Create tag
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action Bot"
+          TAG=${{ needs.build-custom-pi-image.outputs.image_tag }}
+          
+          # Delete tag if it exists (force update)
+          git tag -d $TAG 2>/dev/null || true
+          git push origin :refs/tags/$TAG 2>/dev/null || true
+          
+          # Create new tag
+          git tag -a $TAG -m "Generated Raspberry Pi image $TAG"
+          git push origin --tags
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Release tag
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ needs.build-custom-pi-image.outputs.image_tag }}
+          name: "Raspberry Pi Image ${{ needs.build-custom-pi-image.outputs.image_tag }}"
+          body: "Built on: ${{ github.run_id }}"
+          files: |
+            ${{ github.workspace }}/image/**/*
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
