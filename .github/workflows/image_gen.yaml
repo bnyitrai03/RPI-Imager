@@ -37,6 +37,9 @@ jobs:
       - name: Build Raspberry Pi Image
         id: build-image
         uses: usimd/pi-gen-action@v1.10.0
+        env:
+          WIFI_SSID: ${{ secrets.WIFI_SSID }}
+          WIFI_PASS: ${{ secrets.WIFI_PASS }}
         with:
           # Main configuration
           image-name: '${{ steps.set-output.outputs.IMAGE_TAG }}'
