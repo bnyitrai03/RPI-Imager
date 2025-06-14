@@ -7,10 +7,11 @@ raspi-config nonint do_wifi_country HU
 echo "Set WiFi country to HU"
 
 # Configure WiFi using NetworkManager connection file
+uuid=$(cat /proc/sys/kernel/random/uuid)
 tee "/etc/NetworkManager/system-connections/$WIFI_SSID.nmconnection" > /dev/null << EOF
 [connection]
 id=$WIFI_SSID
-uuid=$(uuidgen)
+uuid=$uuid
 type=wifi
 autoconnect=true
 
