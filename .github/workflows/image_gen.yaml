@@ -34,12 +34,16 @@ jobs:
           echo "IMAGE_NAME=${IMAGE_NAME}" >> $GITHUB_OUTPUT
           echo "VERSION=${VERSION}" >> $GITHUB_OUTPUT
 
+      - name: Create WiFi config file
+        run: |
+          cat > pi-gen-custom-stage/01-config/wifi-config << EOF
+          WIFI_SSID="${{ secrets.WIFI_SSID }}"
+          WIFI_PASS="${{ secrets.WIFI_PASS }}"
+          EOF
+
       - name: Build Raspberry Pi Image
         id: build-image
         uses: usimd/pi-gen-action@v1.10.0
-        env:
-          WIFI_SSID: ${{ secrets.WIFI_SSID }}
-          WIFI_PASS: ${{ secrets.WIFI_PASS }}
         with:
           # Main configuration
           image-name: '${{ steps.set-output.outputs.IMAGE_TAG }}'
@@ -48,7 +52,7 @@ jobs:
           stage-list: 'stage0 stage1 stage2 ./pi-gen-custom-stage'
           compression: 'zip'
           compression-level: 3
-          verbose-output: true
+          verbose-output: false
 
           # User configuration
           enable-ssh: 1

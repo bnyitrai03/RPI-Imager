@@ -6,6 +6,20 @@ echo "Added dtparam=ant2 to /boot/firmware/config.txt"
 raspi-config nonint do_wifi_country HU
 echo "Set WiFi country to HU"
 
+# Load WiFi configuration
+if [ -f "wifi-config" ]; then
+    source "wifi-config"
+    echo "Loaded WiFi config for SSID: $WIFI_SSID"
+else
+    echo "Error: WiFi config file not found"
+    exit 1
+fi
+
+if [ -z "$WIFI_SSID" ] || [ -z "$WIFI_PASS" ]; then
+    echo "Error: WIFI_SSID or WIFI_PASS is empty"
+    exit 1
+fi
+
 # Configure WiFi using NetworkManager connection file
 uuid=$(cat /proc/sys/kernel/random/uuid)
 tee "/etc/NetworkManager/system-connections/$WIFI_SSID.nmconnection" > /dev/null << EOF
