@@ -7,11 +7,19 @@ raspi-config nonint do_wifi_country HU
 echo "Set WiFi country to HU"
 
 # Load WiFi configuration
-if [ -f "wifi-config" ]; then
-    source "wifi-config"
-    echo "Loaded WiFi config for SSID: $WIFI_SSID"
+if [ -f "/wifi-config" ]; then
+    source "/wifi-config"
+    echo "Loaded WiFi config from /wifi-config for SSID: $WIFI_SSID"
+elif [ -f "./wifi-config" ]; then
+    source "./wifi-config"
+    echo "Loaded WiFi config from ./wifi-config for SSID: $WIFI_SSID"
+elif [ -f "../wifi-config" ]; then
+    source "../wifi-config"
+    echo "Loaded WiFi config from ../wifi-config for SSID: $WIFI_SSID"
 else
     echo "Error: WiFi config file not found"
+    echo "Current directory contents:"
+    ls -la
     exit 1
 fi
 
