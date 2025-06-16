@@ -36,10 +36,12 @@ jobs:
 
       - name: Create WiFi config file
         run: |
-          cat > pi-gen-custom-stage/01-config/wifi-config << EOF
+          mkdir -p pi-gen-custom-stage/01-config/files
+          cat > pi-gen-custom-stage/01-config/files/wifi-config << EOF
           WIFI_SSID="${{ secrets.WIFI_SSID }}"
           WIFI_PASS="${{ secrets.WIFI_PASS }}"
           EOF
+          echo "Created WiFi config for SSID: ${{ secrets.WIFI_SSID }}"
 
       - name: Build Raspberry Pi Image
         id: build-image
@@ -52,7 +54,7 @@ jobs:
           stage-list: 'stage0 stage1 stage2 ./pi-gen-custom-stage'
           compression: 'zip'
           compression-level: 3
-          verbose-output: false
+          verbose-output: true
 
           # User configuration
           enable-ssh: 1
@@ -67,8 +69,6 @@ jobs:
           keyboard-keymap: 'hu'
           keyboard-layout: 'Hungarian (HU)'
           wpa-country: 'HU'
-          wpa-essid: '${{ secrets.WIFI_SSID }}'
-          wpa-password: '${{ secrets.WIFI_PASS }}'
 
       - name: Upload Image Artifact
         uses: actions/upload-artifact@v4
