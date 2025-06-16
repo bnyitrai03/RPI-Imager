@@ -34,14 +34,35 @@ jobs:
           echo "IMAGE_NAME=${IMAGE_NAME}" >> $GITHUB_OUTPUT
           echo "VERSION=${VERSION}" >> $GITHUB_OUTPUT
 
-      - name: Create WiFi config file
+      - name: Create WiFi connection file
         run: |
           mkdir -p pi-gen-custom-stage/01-config/files
-          cat > pi-gen-custom-stage/01-config/files/wifi-config << EOF
-          WIFI_SSID="${{ secrets.WIFI_SSID }}"
-          WIFI_PASS="${{ secrets.WIFI_PASS }}"
+          
+          UUID=$(cat /proc/sys/kernel/random/uuid)
+          cat > "pi-gen-custom-stage/01-config/files/main.nmconnection" << EOF
+          [connection]
+          id=main
+          uuid=${UUID}
+          type=wifi
+          autoconnect=true
+
+          [wifi]
+          ssid=${{ secrets.WIFI_SSID }}
+
+          [wifi-security]
+          key-mgmt=wpa-psk
+          psk=${{ secrets.WIFI_PASS }}
+
+          [ipv4]
+          method=auto
+
+          [ipv6]
+          method=auto
           EOF
-          echo "Created WiFi config for SSID: ${{ secrets.WIFI_SSID }}"
+          
+          echo "Created NetworkManager connection file for ${{ secrets.WIFI_SSID }}"
+          echo "DebugG: Contents of main.nmconnection:"
+          cat pi-gen-custom-stage/01-config/files/main.nmconnection
 
       - name: Build Raspberry Pi Image
         id: build-image
