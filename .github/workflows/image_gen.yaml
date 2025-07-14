@@ -68,8 +68,6 @@ jobs:
           EOF
           
           echo "Created NetworkManager connection file for ${{ secrets.WIFI_SSID }}"
-          echo "Debug: Contents of main.nmconnection:"
-          cat pi-gen-custom-stage/01-config/files/main.nmconnection
 
       - name: Build Raspberry Pi Image
         id: build-image

@@ -56,8 +56,9 @@ source .stream_venv/bin/activate
 pip install -r requirements.txt
 deactivate
 echo "Installed StreamingService with dependencies"
-EOF
+
 chown -R ${FIRST_USER_NAME}:${FIRST_USER_NAME} ${ROOTFS_DIR}/opt/BabyMonitor
+EOF
 
 # Create systemd services
 cat > ${ROOTFS_DIR}/etc/systemd/system/BabyMonitor-CameraManager.service << EOF
@@ -69,7 +70,6 @@ After=network.target
 Type=simple
 User=${FIRST_USER_NAME}
 WorkingDirectory=/opt/BabyMonitor/CameraManagerService
-Environment=PATH=/opt/BabyMonitor/CameraManagerService/.camera_venv/bin
 ExecStart=/opt/BabyMonitor/CameraManagerService/.camera_venv/bin/python -m uvicorn src.config_api:app --host 127.0.0.1 --port 8000
 Restart=always
 RestartSec=10
@@ -78,6 +78,7 @@ RestartSec=10
 WantedBy=multi-user.target
 
 EOF
+echo "CameraManagerService created"
 
 cat > ${ROOTFS_DIR}/etc/systemd/system/BabyMonitor-Streaming.service << EOF
 [Unit]
@@ -88,7 +89,6 @@ After=network.target
 Type=simple
 User=${FIRST_USER_NAME}
 WorkingDirectory=/opt/BabyMonitor/StreamingService
-Environment=PATH=/opt/BabyMonitor/StreamingService/.stream_venv/bin
 ExecStart=/opt/BabyMonitor/StreamingService/.stream_venv/bin/python -m uvicorn src.streaming_api:app --host 127.0.0.1 --port 8002
 Restart=always
 RestartSec=10
@@ -97,6 +97,8 @@ RestartSec=10
 WantedBy=multi-user.target
 
 EOF
+echo "StreamingService created"
+echo "Image customization done"
 
 # on_chroot << EOF
 # systemctl enable BabyMonitor-CameraManager.service
