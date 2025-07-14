@@ -16,7 +16,7 @@ EOF
 
 on_chroot << EOF
 mkdir -p /etc/nginx/ssl
-sudo openssl req -x509 -nodes -days 3650 -newkey rsa:2048 \
+openssl req -x509 -nodes -days 3650 -newkey rsa:2048 \
   -keyout /etc/nginx/ssl/rpicm5.key \
   -out /etc/nginx/ssl/rpicm5.crt \
   -subj "/C=HU/ST=Budapest/L=Budapest/O=SZTAKI/CN=rpicm5"
@@ -36,11 +36,70 @@ echo "v4l2loopback" | tee /etc/modules-load.d/v4l2loopback.conf
 echo 'options v4l2loopback devices=6 video_nr=10,11,12,14,15,16 card_label="Cam1,CamL1,CamR1,Cam2,CamL2,CamR2"' | tee /etc/modprobe.d/v4l2loopback-options.conf
 EOF
 
-# Install Services, which are linked as a git module
-# Create a venv
-python3 -m venv .venv
-source .venv/bin/activate
-pip install -r /BabyMonitor/requirements.txt
+# Install Services
+install -v -d ${ROOTFS_DIR}/opt/BabyMonitor
+cp -r files/Services/CameraManagerService ${ROOTFS_DIR}/opt/BabyMonitor/CameraManagerService
+cp -r files/Services/StreamingService ${ROOTFS_DIR}/opt/BabyMonitor/StreamingService
 
+# Create virtual environments and install dependencies
+on_chroot << EOF
+cd /opt/BabyMonitor/CameraManagerService
+python3 -m venv .camera_venv
+source .camera_venv/bin/activate
+pip install -r requirements.txt
+deactivate
+echo "Installed CameraManagerService with dependencies"
 
-# Create a systemd for the services
+cd /opt/BabyMonitor/StreamingService
+python3 -m venv .stream_venv
+source .stream_venv/bin/activate
+pip install -r requirements.txt
+deactivate
+echo "Installed StreamingService with dependencies"
+EOF
+chown -R ${FIRST_USER_NAME}:${FIRST_USER_NAME} ${ROOTFS_DIR}/opt/BabyMonitor
+
+# Create systemd services
+cat > ${ROOTFS_DIR}/etc/systemd/system/BabyMonitor-CameraManager.service << EOF
+[Unit]
+Description=Baby Monitor Camera Manager Service
+After=network.target
+
+[Service]
+Type=simple
+User=${FIRST_USER_NAME}
+WorkingDirectory=/opt/BabyMonitor/CameraManagerService
+Environment=PATH=/opt/BabyMonitor/CameraManagerService/.camera_venv/bin
+ExecStart=/opt/BabyMonitor/CameraManagerService/.camera_venv/bin/python -m uvicorn src.config_api:app --host 127.0.0.1 --port 8000
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target
+
+EOF
+
+cat > ${ROOTFS_DIR}/etc/systemd/system/BabyMonitor-Streaming.service << EOF
+[Unit]
+Description=Baby Monitor Video Streaming Service
+After=network.target
+
+[Service]
+Type=simple
+User=${FIRST_USER_NAME}
+WorkingDirectory=/opt/BabyMonitor/StreamingService
+Environment=PATH=/opt/BabyMonitor/StreamingService/.stream_venv/bin
+ExecStart=/opt/BabyMonitor/StreamingService/.stream_venv/bin/python -m uvicorn src.streaming_api:app --host 127.0.0.1 --port 8002
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target
+
+EOF
+
+# on_chroot << EOF
+# systemctl enable BabyMonitor-CameraManager.service
+# systemctl enable BabyMonitor-Streaming.service
+# echo "Enabled systemd services"
+# EOF
