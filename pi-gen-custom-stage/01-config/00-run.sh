@@ -57,7 +57,7 @@ pip install -r requirements.txt
 deactivate
 echo "Installed StreamingService with dependencies"
 
-chown -R ${FIRST_USER_NAME}:${FIRST_USER_NAME} ${ROOTFS_DIR}/opt/BabyMonitor
+chown -R "${FIRST_USER_NAME}:${FIRST_USER_NAME}" /opt/BabyMonitor
 EOF
 
 # Create systemd services
