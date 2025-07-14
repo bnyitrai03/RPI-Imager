@@ -1,0 +1,3 @@
+[submodule "pi-gen-custom-stage/01-config/files/Services"]
+	path = pi-gen-custom-stage/01-config/files/Services
+	url = https://github.com/bnyitrai03/RPICM5-Baby-Monitor.git
