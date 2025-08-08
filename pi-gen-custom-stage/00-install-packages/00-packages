@@ -1,7 +1,8 @@
 nginx
 ustreamer
+ffmpeg
 v4l2loopback-dkms
 v4l-utils
-ffmpeg
+i2c-tools
 python3-pip
 python3-venv
