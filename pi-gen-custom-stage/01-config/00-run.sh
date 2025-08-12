@@ -9,8 +9,6 @@ echo "Enabled I2C"
 
 raspi-config nonint do_wifi_country HU
 echo "Set WiFi country to HU"
-
-echo "Current user being configured: ${FIRST_USER_NAME}"
 EOF
 
 install -v -m 600 files/main.nmconnection ${ROOTFS_DIR}/etc/NetworkManager/system-connections/
@@ -22,9 +20,9 @@ EOF
 on_chroot << EOF
 mkdir -p /etc/nginx/ssl
 openssl req -x509 -nodes -days 3650 -newkey rsa:2048 \
-  -keyout /etc/nginx/ssl/nicowl.key \
-  -out /etc/nginx/ssl/nicowl.crt \
-  -subj "/C=HU/ST=Budapest/L=Budapest/O=SZTAKI/CN=nicowl"
+  -keyout /etc/nginx/ssl/__DEVICE_NAME__.key \
+  -out /etc/nginx/ssl/__DEVICE_NAME__.crt \
+  -subj "/C=HU/ST=Budapest/L=Budapest/O=SZTAKI/CN=__DEVICE_NAME__"
 EOF
 
 # Configure nginx
@@ -88,7 +86,7 @@ User=${FIRST_USER_NAME}
 WorkingDirectory=/opt/BabyMonitor/CameraManagerService
 ExecStart=/opt/BabyMonitor/CameraManagerService/.camera_venv/bin/python -m uvicorn src.config_api:app --host 127.0.0.1 --port 8000
 Restart=always
-RestartSec=10
+RestartSec=5
 
 [Install]
 WantedBy=multi-user.target
@@ -107,7 +105,7 @@ User=${FIRST_USER_NAME}
 WorkingDirectory=/opt/BabyMonitor/StreamingService
 ExecStart=/opt/BabyMonitor/StreamingService/.stream_venv/bin/python -m uvicorn src.streaming_api:app --host 127.0.0.1 --port 8002
 Restart=always
-RestartSec=10
+RestartSec=5
 
 [Install]
 WantedBy=multi-user.target
@@ -126,7 +124,7 @@ User=${FIRST_USER_NAME}
 WorkingDirectory=/opt/BabyMonitor/SensorService
 ExecStart=/opt/BabyMonitor/SensorService/.sensor_venv/bin/python -m uvicorn src.sensor_api:app --host 127.0.0.1 --port 8001
 Restart=always
-RestartSec=10
+RestartSec=5
 
 [Install]
 WantedBy=multi-user.target
@@ -146,5 +144,5 @@ echo "Image customization done"
 # sudo systemctl start BabyMonitor-Streaming.service
 # sudo systemctl start BabyMonitor-CameraManager.service
 # sudo systemctl start BabyMonitor-Sensor.service
-# get the crt from: /etc/nginx/ssl/nicowl.crt
+# get the crt from: /etc/nginx/ssl/__DEVICE_NAME__.crt
 ###################

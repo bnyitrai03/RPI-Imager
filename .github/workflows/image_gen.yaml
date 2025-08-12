@@ -69,12 +69,13 @@ jobs:
           
           echo "Created NetworkManager connection file"
 
-      - name: Inject device name into nginx config
+      - name: Inject device name into nginx config and for ssl key creation
         env:
           HOSTNAME: ${{ secrets.HOSTNAME }}
         run: |
           sed -i "s/__DEVICE_NAME__/${HOSTNAME}/g" pi-gen-custom-stage/01-config/files/baby-monitor-nginx.conf
-          echo "Injected device name into nginx configuration"
+          sed -i "s/__DEVICE_NAME__/${HOSTNAME}/g" pi-gen-custom-stage/01-config/00-run.sh
+          echo "Injected device name"
 
       - name: Build Raspberry Pi Image
         id: build-image
