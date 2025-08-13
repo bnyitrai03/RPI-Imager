@@ -2,7 +2,7 @@
 
 [![Build Custom ARM64 Lite Image](https://github.com/bnyitrai03/RPI-Imager/actions/workflows/image_gen.yaml/badge.svg)](https://github.com/bnyitrai03/RPI-Imager/actions/workflows/image_gen.yaml)
 
-A GitHub Actions-based tool for building custom Raspberry Pi images with pre-configured WiFi, SSH access, and custom packages. This tool uses [pi-gen-action](https://github.com/usimd/pi-gen-action) to create bootable Raspberry Pi OS images tailored for specific use cases.
+A GitHub Actions-based tool for building custom Raspberry Pi images with pre-configured WiFi, SSH access, SSL certificates and custom packages. This tool uses [pi-gen-action](https://github.com/usimd/pi-gen-action) to create bootable Raspberry Pi OS images tailored for specific use cases.
 
 ## Setup
 
@@ -18,6 +18,12 @@ Go to your repository's **Settings > Secrets and variables > Actions** and add t
 | `USERNAME` | Username | `pi` |
 | `PASSWORD` | User password | `raspberry` |
 | `SSH_KEY` | Your SSH public key | `ssh-ed25519 AAAAC3NzaC1lZDI1NTE5A...` |
+
+### 2. Submodule Dependencies
+
+This project includes the baby monitor services as a git submodule:
+- **Services Repository**: [RPICM5-Baby-Monitor](https://github.com/bnyitrai03/RPICM5-Baby-Monitor.git)
+- **Location**: `pi-gen-custom-stage/01-config/files/Services`
 
 ## Usage
 
@@ -42,6 +48,22 @@ Go to your repository's **Settings > Secrets and variables > Actions** and add t
 1. **Download** the `.zip` file from the GitHub release
 2. **Follow this tutorial**:
     - [How to Install OS on Raspberry Pi Compute Module 5 with eMMC Storage](https://smarthomecircle.com/how-to-install-os-on-raspberry-pi-compute-module-5-emmc-storage)
+    
+    - Additional help can be found in the `pi-setup.txt`
+
+### First Boot Configuration
+
+After flashing and booting:
+
+1. **WiFi**: Automatically connects using configured credentials
+2. **SSH**: Access via `ssh username@hostname`
+3. **Services**: All baby monitor services should be started:
+``` bash
+sudo systemctl start BabyMonitor-Streaming.service
+sudo systemctl start BabyMonitor-CameraManager.service
+sudo systemctl start BabyMonitor-Sensor.service
+```
+4. **SSL Certificate**: Located at `/etc/nginx/ssl/[HOSTNAME].crt` (This needs to be copied into the client build directory.)
 
 ## Customization
 
@@ -50,10 +72,14 @@ Go to your repository's **Settings > Secrets and variables > Actions** and add t
 Edit `pi-gen-custom-stage/00-install-packages/00-packages`:
 
 ```
-avahi-utils
-python3-zeroconf
+ustreamer
+ffmpeg
+v4l2loopback-dkms
+v4l-utils
+i2c-tools
+python3-pip
+python3-venv
 # Add your packages here
-nodejs
 nginx
 ```
 
@@ -84,20 +110,4 @@ timezone: 'America/New_York'
 keyboard-keymap: 'us'
 keyboard-layout: 'English (US)'
 wpa-country: 'US'
-```
-
-## Project Structure
-
-```
-├── .github/
-│   └── workflows/
-│       └── image_gen.yaml          # Main workflow file
-├── pi-gen-custom-stage/
-│   ├── 00-install-packages/
-│   │   └── 00-packages             # Package list
-│   ├── 01-config/
-│   │   ├── 00-run.sh              # Configuration script
-│   │   └── files/                  # Configuration files
-│   └── prerun.sh                   # Stage preparation
-└── README.md
 ```

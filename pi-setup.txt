@@ -1,0 +1,14 @@
+Download: Raspberry Pi Imager, rpiboot-CM4-CM5 - Mass Storage Gadget
+Tutorial: https://smarthomecircle.com/how-to-install-os-on-raspberry-pi-compute-module-5-emmc-storage
+
+1. Jumper to disable eMMC boot
+2. Run rpiboot-CM5 on the PC
+3. Connect the Pi to the PC
+4. After the formatting use Raspberry Pi Imager to install the custom image
+5. On the image start the services: (Commented out in the workflow)
+	sudo systemctl start BabyMonitor-Streaming.service
+	sudo systemctl start BabyMonitor-CameraManager.service
+	sudo systemctl start BabyMonitor-Sensor.service
+6. Get the ssl certificate from the Pi:
+	cat /etc/nginx/ssl/__DEVICE_NAME__.crt
+7. Copy it to the PC client's build folder: ...build/Desktop_Qt_6_9_1_MSVC2022_64bit-Release/__DEVICE_NAME__.crt
